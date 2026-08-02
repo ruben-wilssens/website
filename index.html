@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruben Wilssens — UWB Wireless Engineering</title>
+<meta name="description" content="Wireless connectivity, UWB localization and sensing: antenna and RF design, schematic capture, PCB layout, embedded firmware, and small-batch product design.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #0B0D10;
+    --panel: #12161B;
+    --panel-border: #1F252C;
+    --copper: #C9814A;
+    --pulse: #46B3E6;
+    --text: #EDEFF2;
+    --text-muted: #8A93A3;
+    --text-faint: #565E6B;
+    --radius: 10px;
+    --maxw: 1080px;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .mono{ font-family:'JetBrains Mono',monospace; }
+  a{color:inherit;}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 28px;}
+  section{padding:120px 0;}
+  @media (max-width:640px){ section{padding:76px 0;} }
+
+  .traces{
+    position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.35;
+    background-image:
+      linear-gradient(var(--panel-border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--panel-border) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 70%);
+  }
+
+  /* ---------- header ---------- */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(11,13,16,0.82);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--panel-border);
+  }
+  .nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 28px;
+    max-width:var(--maxw); margin:0 auto;
+  }
+  .brand{
+    display:flex; align-items:baseline; gap:8px;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:18px;
+    text-decoration:none; color:var(--text);
+  }
+  .brand .dot{color:var(--pulse);}
+  .navlinks{display:flex; gap:32px; list-style:none; margin:0; padding:0;}
+  .navlinks a{
+    font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.08em;
+    text-decoration:none; color:var(--text-muted); text-transform:uppercase;
+    transition:color .15s ease;
+  }
+  .navlinks a:hover, .navlinks a:focus-visible{color:var(--pulse);}
+  @media (max-width:640px){ .navlinks{gap:18px;} .navlinks a{font-size:11px;} }
+
+  /* ---------- hero ---------- */
+  .hero{padding:96px 0 60px; position:relative; z-index:1;}
+  .hero-top{
+    display:grid; grid-template-columns:0.8fr 0.4fr; gap:56px; align-items:stretch;
+  }
+  @media (max-width:860px){ .hero-top{grid-template-columns:1fr; gap:36px;} }
+  .hero-copy{ display:flex; flex-direction:column; }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.12em;
+    color:var(--copper); text-transform:uppercase; margin-bottom:22px;
+  }
+  .hero h1{
+    font-size:clamp(34px, 4.2vw, 56px);
+    line-height:1.08;
+  }
+  .hero h1 em{ font-style:normal; color:var(--pulse); }
+  .hero p.lede{
+    margin-top:22px; max-width:56ch; color:var(--text-muted); font-size:17px;
+  }
+  .hero-ctas{display:flex; gap:14px; margin-top:34px; flex-wrap:wrap;}
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:13px 22px; border-radius:6px;
+    font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:0.03em;
+    text-decoration:none; border:1px solid transparent; cursor:pointer;
+    transition:transform .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .btn-primary{background:var(--pulse); color:#06141B;}
+  .btn-primary:hover{transform:translateY(-1px); background:#5cc0ee;}
+  .btn-ghost{border-color:var(--panel-border); color:var(--text);}
+  .btn-ghost:hover{border-color:var(--pulse); color:var(--pulse);}
+
+  /* ---------- hero image ---------- */
+  .hero-image-group{
+    display:flex; gap:12px; height:100%;
+  }
+  .hero-image{
+    flex:1 1 0;
+    border-radius:var(--radius);
+    overflow:hidden;
+    border:1px solid var(--panel-border);
+    background:var(--panel);
+    min-height:320px;
+    max-height:600px;
+  }
+  .hero-image img{
+    display:block;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+  @media (max-width:860px){
+    .hero-image{ min-height:260px; }
+  }
+  @media (max-width:520px){
+    .hero-image-group{ flex-direction:column; }
+  }
+
+  /* ---------- capabilities demo ---------- */
+  .capabilities{ margin-top:64px; }
+  .cap-tabs{
+    display:flex; gap:6px; flex-wrap:wrap; margin-bottom:0;
+  }
+  .cap-tab{
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:0.02em;
+    color:var(--text-muted); background:var(--panel); border:1px solid var(--panel-border);
+    border-bottom:none; padding:11px 16px; border-radius:8px 8px 0 0; cursor:pointer;
+    transition:color .15s ease, background .15s ease;
+  }
+  .cap-tab.active{ color:var(--text); background:#171C22; }
+  .cap-tab:hover:not(.active){ color:var(--text); }
+  .cap-panels{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:0 var(--radius) var(--radius) var(--radius);
+    padding:26px 28px 22px;
+  }
+  .cap-panel{ display:none; }
+  .cap-panel.active{ display:block; }
+  .cap-panel svg{ width:100%; height:auto; display:block; }
+
+  .lbl{ font-family:'JetBrains Mono',monospace; font-size:10.5px; fill:var(--text-faint); letter-spacing:0.04em; }
+  .lbl-copper{ font-family:'JetBrains Mono',monospace; font-size:10.5px; fill:var(--copper); letter-spacing:0.04em; }
+  .dot-elem{ fill:var(--copper); }
+  .ref-line{ stroke:var(--panel-border); stroke-width:1.4; stroke-dasharray:3 5; }
+  .rf-line{ stroke:var(--pulse); stroke-width:1.6; }
+  .rf-line-faint{ stroke:var(--pulse); stroke-width:1.2; stroke-dasharray:3 4; opacity:0.3; }
+  .mod-box{ fill:#171C22; stroke:var(--panel-border); stroke-width:1.2; }
+  .conn-tab{ fill:var(--copper); opacity:0.85; }
+  .bus-rail{ fill:var(--pulse); opacity:0.22; }
+  .bus-flow{ fill:var(--pulse); }
+  .drag-ring{ fill:none; stroke:var(--pulse); stroke-width:1.2; stroke-dasharray:2 4; opacity:0.5; animation: drag-invite 2.2s ease-in-out infinite; transform-origin:center; }
+  @keyframes drag-invite{ 0%,100%{ opacity:0.25; } 50%{ opacity:0.7; } }
+  .drag-handle{ fill:transparent; cursor:grab; touch-action:none; }
+  .drag-handle:active{ cursor:grabbing; }
+
+  .readout-row{
+    display:flex; gap:28px; flex-wrap:wrap; margin-top:18px;
+    padding-top:16px; border-top:1px solid var(--panel-border);
+    align-items: baseline;
+  }
+  .readout{ font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--text-muted); }
+  .readout b{ color:var(--text); font-weight:500; }
+  .readout .unit{ color:var(--text-faint); }
+  .readout-mode{
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--copper);
+    margin-left:auto; letter-spacing:0.02em;
+  }
+  .cap-caption{
+    margin-top:14px; font-family:'JetBrains Mono',monospace; font-size:11.5px;
+    color:var(--text-faint); line-height:1.5;
+  }
+
+  /* SVG animations */
+  .uwb-burst {
+    fill: none;
+    stroke: var(--pulse);
+    stroke-width: 1.5;
+    opacity: 0;
+  }
+  .pulse-active {
+    animation: burst-travel 1.6s cubic-bezier(0.1, 0.7, 0.1, 1) infinite;
+  }
+  @keyframes burst-travel {
+    0% { r: 0; opacity: 0.9; }
+    70% { opacity: 0.4; }
+    100% { r: 180; opacity: 0; }
+  }
+
+  /* Sector beams with 120° FOV overlapping regions */
+  .sector-beam {
+    fill: var(--pulse);
+    opacity: 0.10;
+    mix-blend-mode: screen;
+    animation: beam-pulse 3s ease-in-out infinite;
+  }
+  @keyframes beam-pulse {
+    0%, 100% { opacity: 0.08; }
+    50% { opacity: 0.18; }
+  }
+
+  /* Subtle chest breathing motion for target dot */
+  .subtle-breathe {
+    animation: chest-subtle 3.6s ease-in-out infinite;
+    transform-origin: center;
+  }
+  @keyframes chest-subtle {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.18); opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .pulse-active, .sector-beam, .subtle-breathe, .drag-ring{ animation:none !important; opacity:1; }
+  }
+
+  /* ---------- section headers ---------- */
+  .section-head{margin-bottom:56px;}
+  .section-head .tag{
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--copper);
+    letter-spacing:0.12em; text-transform:uppercase; margin-bottom:14px; display:block;
+  }
+  .section-head h2{font-size:clamp(26px, 3.4vw, 36px); max-width:22ch;}
+
+  /* ---------- services ---------- */
+  .services-grid{
+    display:grid; grid-template-columns:repeat(2, 1fr); gap:1px;
+    background:var(--panel-border); border:1px solid var(--panel-border);
+    border-radius:var(--radius); overflow:hidden;
+  }
+  @media (max-width:760px){ .services-grid{grid-template-columns:1fr;} }
+  .svc{background:var(--panel); padding:32px 30px;}
+  .svc .code{
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--pulse);
+    letter-spacing:0.06em;
+  }
+  .svc h3{margin-top:12px; font-size:19px;}
+  .svc p{margin-top:10px; color:var(--text-muted); font-size:14.5px;}
+
+  /* ---------- why / approach ---------- */
+  .approach-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:24px; }
+  @media (max-width:760px){ .approach-grid{grid-template-columns:1fr;} }
+  .approach-grid h3{font-size:17px; color:var(--copper);}
+  .approach-grid p{margin-top:10px; color:var(--text-muted); font-size:14.5px;}
+
+  /* ---------- about ---------- */
+  .about{ display:grid; grid-template-columns:1fr 1.4fr; gap:56px; align-items:start; }
+  @media (max-width:760px){ .about{grid-template-columns:1fr; gap:28px;} }
+  .about-tags{display:flex; flex-wrap:wrap; gap:8px;}
+  .about-tags span{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-muted);
+    border:1px solid var(--panel-border); padding:6px 10px; border-radius:20px;
+  }
+  .about p{color:var(--text-muted); font-size:16px;}
+  .about p + p{margin-top:16px;}
+  .about strong{color:var(--text); font-weight:500;}
+
+  /* ---------- store ---------- */
+  .store-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; }
+  @media (max-width:900px){ .store-grid{grid-template-columns:1fr 1fr;} }
+  @media (max-width:640px){ .store-grid{grid-template-columns:1fr;} }
+  .product{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:var(--radius);
+    padding:26px; display:flex; flex-direction:column; height:100%;
+  }
+  .product .swatch{
+    width:100%; height:110px; border-radius:6px; margin-bottom:18px;
+    background:
+      repeating-linear-gradient(135deg, rgba(70,179,230,0.10) 0 2px, transparent 2px 14px),
+      linear-gradient(160deg, #171C22, #0F1216);
+    border:1px solid var(--panel-border);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-faint);
+    letter-spacing:0.08em;
+  }
+  .product h3{font-size:17px;}
+  .product .spec{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--copper); margin-top:6px; }
+  .product p.desc{color:var(--text-muted); font-size:14px; margin-top:10px; flex-grow:1;}
+  .product .btn{margin-top:18px; align-self:flex-start; padding:10px 16px; font-size:12px;}
+  .product.soon{opacity:0.6; align-items:center; justify-content:center; text-align:center;}
+  .product.soon .swatch{display:none;}
+
+  /* ---------- contact ---------- */
+  .contact-box{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:var(--radius);
+    padding:52px; text-align:center;
+  }
+  .contact-box h2{font-size:clamp(26px,4vw,38px); max-width:18ch; margin:0 auto;}
+  .contact-box p{color:var(--text-muted); margin-top:14px;}
+  .contact-box .btn{margin-top:26px;}
+
+  /* ---------- footer ---------- */
+  footer{ border-top:1px solid var(--panel-border); padding:36px 0; position:relative; z-index:1; }
+  .foot-row{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; }
+  .foot-row .brand{font-size:15px;}
+  .foot-links{display:flex; gap:22px; list-style:none; padding:0; margin:0;}
+  .foot-links a{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-muted);
+    text-decoration:none; letter-spacing:0.05em;
+  }
+  .foot-links a:hover{color:var(--pulse);}
+  .copyright{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-faint);
+    margin-top:20px;
+  }
+
+  /* scroll reveal */
+  .reveal{opacity:0; transform:translateY(14px); transition:opacity .6s ease, transform .6s ease;}
+  .reveal.in{opacity:1; transform:translateY(0);}
+  @media (prefers-reduced-motion: reduce){
+    .reveal{opacity:1; transform:none; transition:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="traces"></div>
+
+<header>
+  <nav class="nav">
+    <a href="#top" class="brand">Ruben Wilssens<span class="dot">.</span></a>
+    <ul class="navlinks">
+      <li><a href="#services">Services</a></li>
+      <li><a href="#store">Store</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="top">
+
+  <section class="hero wrap">
+    <div class="hero-top">
+      <div class="hero-copy">
+        <div class="eyebrow">Wireless Connectivity · UWB Localization &amp; Sensing</div>
+        <h1>Wireless that knows <em>where</em>, not just <em>what</em>.</h1>
+        <p class="lede">
+          I design and build Ultra-Wideband hardware — antennas, RF front-ends, and the embedded
+          systems around them — for applications where a device needs to talk, locate itself, and
+          sense its surroundings at the same time.
+        </p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary" href="https://www.linkedin.com/in/ruben-wilssens" target="_blank" rel="noopener">Get in touch</a>
+          <a class="btn btn-ghost" href="#store">Browse modules</a>
+        </div>
+      </div>
+
+      <div class="hero-image-group reveal">
+        <div class="hero-image">
+          <img src="images/hero-board.jpg" alt="UWB antenna and RF hardware prototype, front view">
+        </div>
+        <div class="hero-image">
+          <img src="images/hero-board-back.jpg" alt="UWB antenna and RF hardware prototype, back view">
+        </div>
+      </div>
+    </div>
+
+    <div class="capabilities reveal">
+      <div class="cap-tabs" role="tablist">
+        <button class="cap-tab active" data-tab="0" role="tab" aria-selected="true">Distance &amp; Direction</button>
+        <button class="cap-tab" data-tab="1" role="tab" aria-selected="false">Modular &amp; Scalable</button>
+        <button class="cap-tab" data-tab="2" role="tab" aria-selected="false">360° Coverage</button>
+        <button class="cap-tab" data-tab="3" role="tab" aria-selected="false">Presence &amp; Vitals</button>
+      </div>
+
+      <div class="cap-panels">
+
+        <!-- TAB 0: Distance, Direction, Position Estimate with UWB Bursts -->
+        <div class="cap-panel active" data-panel="0">
+          <svg id="t0-svg" viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <clipPath id="t0-burst-clip">
+                <circle id="t0-clip-circle" cx="70" cy="100" r="0"/>
+              </clipPath>
+            </defs>
+
+            <!-- Boresight reference -->
+            <line x1="480" y1="100" x2="430" y2="100" class="ref-line"/>
+            
+            <!-- Radiating UWB Pulses (Bursts) -->
+            <g clip-path="url(#t0-burst-clip)">
+              <line id="t0-burst-line1" x1="70" y1="100" x2="480" y2="85" class="rf-line"/>
+              <line id="t0-burst-line2" x1="70" y1="100" x2="480" y2="115" class="rf-line"/>
+            </g>
+
+            <!-- Radial expansion pulse indicator -->
+            <circle id="t0-pulse" cx="70" cy="100" class="uwb-burst pulse-active"/>
+
+            <!-- Direction vector line -->
+            <line id="t0-direction" x1="480" y1="100" x2="70" y2="100" class="rf-line-faint"/>
+
+            <!-- RX Node (1x2 Array unified) -->
+            <g id="t0-rx-node">
+              <rect x="466" y="70" width="28" height="60" rx="5" class="mod-box"/>
+              <circle cx="480" cy="85" r="4" class="dot-elem"/>
+              <circle cx="480" cy="115" r="4" class="dot-elem"/>
+              <text x="480" y="145" text-anchor="middle" class="lbl-copper">1×2 RX NODE</text>
+            </g>
+
+            <!-- Moving Tag -->
+            <circle id="t0-tag-ring" cx="70" cy="100" r="11" class="drag-ring"/>
+            <circle id="t0-tag" cx="70" cy="100" r="5" class="dot-elem"/>
+            <text id="t0-tag-label" x="70" y="88" text-anchor="middle" class="lbl">TAG</text>
+            
+            <!-- Draggable Handle -->
+            <circle id="t0-handle" cx="70" cy="100" r="22" class="drag-handle"/>
+          </svg>
+
+          <div class="readout-row">
+            <div class="readout">DISTANCE&nbsp; <b id="t0-dist">—</b> <span class="unit">m</span></div>
+            <div class="readout">DIRECTION&nbsp; <b id="t0-dirval">—</b> <span class="unit">deg</span></div>
+            <div class="readout">POSITION ESTIMATE&nbsp; <b id="t0-pos">—</b> <span class="unit">(X, Y) m</span></div>
+          </div>
+          <div class="cap-caption">Drag the tag. A single UWB pulse transmission from a single-antenna tag to a unified 1×2 RX node measures distance via Time-of-Flight and direction via Phase/Time Difference of Arrival.</div>
+        </div>
+
+        <!-- TAB 1: Modular & Scalable N dynamic updates -->
+        <div class="cap-panel" data-panel="1">
+          <svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect id="t1-bus" x="70" y="97" width="0" height="6" rx="3" class="bus-rail"/>
+            <circle id="t1-flow" cx="70" cy="100" r="3.5" class="bus-flow"/>
+            <g id="t1-mods"></g>
+          </svg>
+          <div class="readout-row">
+            <div class="readout" id="t1-label">N = 1 MODULE CASCADED</div>
+            <!-- Specific N mode capabilities displayed directly next to module count -->
+            <div class="readout-mode" id="t1-mode-spec">distance + 1D direction (2D position)</div>
+          </div>
+          <div class="cap-caption">Every module is the same 1×2 building block, sharing a common bus. Cascade two, three, or four together to scale range, redundancy, or coverage — no redesign required.</div>
+        </div>
+
+        <!-- TAB 2: Square 360° Cluster with Overlapping 120° FOV Sector Beams -->
+        <div class="cap-panel" data-panel="2">
+          <svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <!-- 120° FOV Overlapping Sector Beams centered on 4 outward-facing modules arranged in a square -->
+            
+            <!-- Top Module Beam (Facing Up: Angle -150° to -30°) -->
+            <path d="M 280,72 L 180,14 A 110,110 0 0,1 380,14 Z" class="sector-beam"/>
+            
+            <!-- Right Module Beam (Facing Right: Angle -60° to +60°) -->
+            <path d="M 308,100 L 374,34 A 110,110 0 0,1 374,166 Z" class="sector-beam"/>
+            
+            <!-- Bottom Module Beam (Facing Down: Angle 30° to 150°) -->
+            <path d="M 280,128 L 380,186 A 110,110 0 0,1 180,186 Z" class="sector-beam"/>
+            
+            <!-- Left Module Beam (Facing Left: Angle 120° to 240° / -120°) -->
+            <path d="M 252,100 L 186,166 A 110,110 0 0,1 186,34 Z" class="sector-beam"/>
+
+            <!-- Square Cluster Array (Symmetric 4x 1x2 Modules) -->
+            <!-- Top Module (Horizontal 1x2) -->
+            <g>
+              <rect x="252" y="72" width="56" height="14" rx="3" class="mod-box"/>
+              <circle cx="266" cy="79" r="3" class="dot-elem"/>
+              <circle cx="294" cy="79" r="3" class="dot-elem"/>
+            </g>
+            <!-- Right Module (Vertical 1x2) -->
+            <g>
+              <rect x="294" y="72" width="14" height="56" rx="3" class="mod-box"/>
+              <circle cx="301" cy="86" r="3" class="dot-elem"/>
+              <circle cx="301" cy="114" r="3" class="dot-elem"/>
+            </g>
+            <!-- Bottom Module (Horizontal 1x2) -->
+            <g>
+              <rect x="252" y="114" width="56" height="14" rx="3" class="mod-box"/>
+              <circle cx="266" cy="121" r="3" class="dot-elem"/>
+              <circle cx="294" cy="121" r="3" class="dot-elem"/>
+            </g>
+            <!-- Left Module (Vertical 1x2) -->
+            <g>
+              <rect x="252" y="72" width="14" height="56" rx="3" class="mod-box"/>
+              <circle cx="259" cy="86" r="3" class="dot-elem"/>
+              <circle cx="259" cy="114" r="3" class="dot-elem"/>
+            </g>
+
+            <circle cx="280" cy="100" r="3" fill="var(--copper)"/>
+            <text x="280" y="103" text-anchor="middle" class="lbl-copper" style="font-size:8.5px;">x</text>
+          </svg>
+          <div class="cap-caption">Four 1×2 modules in a compact square assembly, each generating a 120° directional illumination beam facing outward. Overlapping beam sectors guarantee continuous, redundant 360° coverage without blind spots.</div>
+        </div>
+
+        <!-- TAB 3: Cascaded 3x (1x2) Array with 1 TX + 4 RX (2x2 Grid) Multistatic Radar -->
+        <div class="cap-panel" data-panel="3">
+          <svg id="t3-svg" viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <clipPath id="t3-tx-clip">
+                <circle id="t3-tx-clip-circle" cx="95" cy="45" r="0"/>
+              </clipPath>
+              <clipPath id="t3-rx-clip">
+                <circle id="t3-rx-clip-circle" cx="440" cy="100" r="0"/>
+              </clipPath>
+            </defs>
+
+            <!-- Incident Radar Wave (TX Module Element to Target) -->
+            <line id="t3-tx-path" x1="95" y1="45" x2="440" y2="100" class="rf-line-faint"/>
+            <g clip-path="url(#t3-tx-clip)">
+              <line id="t3-tx-pulse-line" x1="95" y1="45" x2="440" y2="100" class="rf-line"/>
+            </g>
+
+            <!-- 4 Reflected RX Paths (Target to 2x2 RX Grid) -->
+            <line id="t3-rx1-path" x1="440" y1="100" x2="80" y2="107" class="rf-line-faint"/>
+            <line id="t3-rx2-path" x1="440" y1="100" x2="110" y2="107" class="rf-line-faint"/>
+            <line id="t3-rx3-path" x1="440" y1="100" x2="80" y2="153" class="rf-line-faint"/>
+            <line id="t3-rx4-path" x1="440" y1="100" x2="110" y2="153" class="rf-line-faint"/>
+            
+            <g clip-path="url(#t3-rx-clip)">
+              <line id="t3-rx1-pulse-line" x1="440" y1="100" x2="80" y2="107" class="rf-line"/>
+              <line id="t3-rx2-pulse-line" x1="440" y1="100" x2="110" y2="107" class="rf-line"/>
+              <line id="t3-rx3-pulse-line" x1="440" y1="100" x2="80" y2="153" class="rf-line"/>
+              <line id="t3-rx4-pulse-line" x1="440" y1="100" x2="110" y2="153" class="rf-line"/>
+            </g>
+
+            <!-- 3 CASCADED 1x2 MODULES (Matching Tab 1 styling) -->
+            <g id="t3-cascaded-nodes">
+              <!-- Module 1 (Top TX Module): 1 Element TX active -->
+              <rect x="65" y="30" width="60" height="30" rx="4" class="mod-box"/>
+              <circle cx="80" cy="45" r="4" fill="none" stroke="var(--text-faint)" stroke-width="1"/>
+              <circle cx="95" cy="45" r="4" class="dot-elem"/> <!-- Active TX antenna -->
+              
+              <!-- Bus Connector 1-2 -->
+              <rect x="92" y="60" width="6" height="35" rx="2" class="conn-tab"/>
+
+              <!-- Module 2 (Middle RX Module): 2 RX elements -->
+              <rect x="65" y="95" width="60" height="25" rx="4" class="mod-box"/>
+              <circle cx="80" cy="107" r="4" class="dot-elem"/>
+              <circle cx="110" cy="107" r="4" class="dot-elem"/>
+
+              <!-- Bus Connector 2-3 -->
+              <rect x="92" y="120" width="6" height="21" rx="2" class="conn-tab"/>
+
+              <!-- Module 3 (Bottom RX Module): 2 RX elements -->
+              <rect x="65" y="141" width="60" height="25" rx="4" class="mod-box"/>
+              <circle cx="80" cy="153" r="4" class="dot-elem"/>
+              <circle cx="110" cy="153" r="4" class="dot-elem"/>
+
+              <!-- Bus Spine -->
+              <line x1="95" y1="30" x2="95" y2="166" stroke="var(--pulse)" stroke-width="1.5" opacity="0.3"/>
+
+              <text x="95" y="186" text-anchor="middle" class="lbl-copper">3× (1×2) CASCADED (1 TX / 4 RX GRID)</text>
+            </g>
+
+            <!-- Moving Dynamic Target with subtle internal chest displacement -->
+            <g id="t3-target-group">
+              <circle id="t3-target-ring" cx="440" cy="100" r="16" class="drag-ring"/>
+              <!-- Human Body Shape -->
+              <circle cx="440" cy="88" r="9" fill="#1B2129" stroke="#3A4351" stroke-width="1.2"/>
+              <rect x="429" y="97" width="22" height="32" rx="8" fill="#1B2129" stroke="#3A4351" stroke-width="1.2"/>
+              <!-- Subtle chest breathing indicator inside body center -->
+              <circle class="subtle-breathe" cx="440" cy="106" r="3.5" fill="var(--pulse)"/>
+              <text x="440" y="142" text-anchor="middle" class="lbl">TARGET</text>
+              <circle id="t3-handle" cx="440" cy="100" r="24" class="drag-handle"/>
+            </g>
+          </svg>
+
+          <div class="readout-row">
+            <div class="readout">PRESENCE&nbsp; <b id="t3-presence">TARGET DETECTED</b></div>
+            <div class="readout">BREATHING RATE&nbsp; <b id="t3-bpm">—</b> <span class="unit">bpm</span></div>
+            <div class="readout">DIRECTION&nbsp; <b id="t3-dir">—</b> <span class="unit">deg</span></div>
+            <div class="readout">RANGE&nbsp; <b id="t3-range">—</b> <span class="unit">m</span></div>
+          </div>
+          <div class="cap-caption">Drag target. Three cascaded 1×2 modules form an integrated radar node: the top module transmits from 1 element while the bottom two modules form a unified 2×2 RX grid to collect 4 distinct receive paths. This multi-channel setup enables AoA-enhanced radar, tracking position, range, direction, and subtle vital signs.</div>
+        </div>
+
+      </div>
+    </div>
+
+  </section>
+
+  <section id="services" class="wrap">
+    <div class="section-head reveal">
+      <span class="tag">What I do</span>
+      <h2>From schematic to shipped hardware.</h2>
+    </div>
+    <div class="services-grid reveal">
+      <div class="svc">
+        <div class="code">SVC.01</div>
+        <h3>Antenna &amp; RF Design</h3>
+        <p>My core expertise: antenna and RF front-end design for anything that needs to travel over the air, from UWB to wireless connectivity more broadly — simulation through to over-the-air measurement.</p>
+      </div>
+      <div class="svc">
+        <div class="code">SVC.02</div>
+        <h3>Concept &amp; System Design</h3>
+        <p>From a rough idea to a working architecture — the same process behind my own store modules and the tile-based UWB hardware from my PhD, now deployed in the field by Belgium-based companies.</p>
+      </div>
+      <div class="svc">
+        <div class="code">SVC.03</div>
+        <h3>Schematic Capture &amp; PCB Layout</h3>
+        <p>Clean, reviewable schematics and RF-aware layouts — controlled impedance, antenna matching, and a design that's genuinely ready for manufacturing.</p>
+      </div>
+      <div class="svc">
+        <div class="code">SVC.04</div>
+        <h3>Testing &amp; Debugging</h3>
+        <p>Bring-up and validation on the bench — the patient work that turns a first article into something you can trust in volume.</p>
+      </div>
+      <div class="svc">
+        <div class="code">SVC.05</div>
+        <h3>Embedded Firmware</h3>
+        <p>Driver and firmware bring-up around UWB radios and sensor front-ends, from first boot to a stable release.</p>
+      </div>
+      <div class="svc">
+        <div class="code">SVC.06</div>
+        <h3>Product Design</h3>
+        <p>Enclosure-aware design that keeps antenna performance, and link budget, intact — so the plastic around your board doesn't undo the RF work inside it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="approach-grid reveal">
+      <div>
+        <h3>Hands-on</h3>
+        <p>Every board I hand over, I've soldered, flashed and measured myself — not just simulated.</p>
+      </div>
+      <div>
+        <h3>Research-grade rigor</h3>
+        <p>PhD-level antenna and RF work, applied to problems that actually need to ship on a schedule.</p>
+      </div>
+      <div>
+        <h3>Small batches welcome</h3>
+        <p>Initial prototypes and short runs are the sweet spot — scope stays honest, whatever the size.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="about" class="wrap">
+    <div class="about reveal">
+      <div>
+        <span class="tag" style="display:block;margin-bottom:14px;">About</span>
+        <div class="about-tags">
+          <span>UWB</span>
+          <span>JCAS / ISAC</span>
+          <span>Antenna Design</span>
+          <span>Embedded Systems</span>
+          <span>IDLab · Ghent University · imec</span>
+        </div>
+      </div>
+      <div>
+        <p>
+          I'm <strong>Ruben Wilssens</strong>, a <strong>PhD researcher at IDLab (Ghent University / imec)</strong>, where I work
+          on the antenna and embedded hardware side of scalable, multi-antenna
+          <strong>Ultra-Wideband (UWB)</strong> systems. My research centers on
+          <strong>Joint Communication and Sensing (JCAS/ISAC)</strong> — using the same radio to
+          communicate, locate, and sense, and closing the gap between theory and something that
+          actually works on the bench.
+        </p>
+        <p>
+          Outside the lab I like applying that same hands-on approach to smaller, practical
+          problems: helping people take an idea from a rough sketch to working hardware —
+          schematic capture, PCB layout, and small-batch product design. Most of what I build
+          for myself ends up here in the store.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="store" class="wrap">
+    <div class="section-head reveal">
+      <span class="tag">Store</span>
+      <h2>A few modules I've built and use myself.</h2>
+    </div>
+    <div class="store-grid reveal">
+      <div class="product">
+        <div class="swatch">CLIMATE NODE — REV B</div>
+        <h3>Climate Node</h3>
+        <div class="spec">Temp · RH · CO₂ · Lux</div>
+        <p class="desc">A compact sensor node that reports straight into Home Assistant. Battery or USB powered, no cloud required.</p>
+        <a class="btn btn-ghost" href="https://www.linkedin.com/in/ruben-wilssens" target="_blank" rel="noopener">Inquire via LinkedIn</a>
+      </div>
+      <div class="product">
+        <div class="swatch">SLAT CONTROLLER — REV A</div>
+        <h3>Slat Controller</h3>
+        <div class="spec">Motorized slats / blinds</div>
+        <p class="desc">Local button control plus Home Assistant integration, so it still works when the network doesn't.</p>
+        <a class="btn btn-ghost" href="https://www.linkedin.com/in/ruben-wilssens" target="_blank" rel="noopener">Inquire via LinkedIn</a>
+      </div>
+      <div class="product soon">
+        <h3>More modules soon</h3>
+        <p class="desc" style="margin-top:8px;">Have something specific in mind? I take on custom module design too.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="wrap">
+    <div class="contact-box reveal">
+      <h2>Have a board that needs to exist?</h2>
+      <p>Send a short note about what you're building — I reply to every message myself.</p>
+      <a class="btn btn-primary" href="https://www.linkedin.com/in/ruben-wilssens" target="_blank" rel="noopener">Connect on LinkedIn</a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <div class="foot-row">
+    <a href="#top" class="brand">Ruben Wilssens<span class="dot">.</span></a>
+    <ul class="foot-links">
+      <li><a href="#services">Services</a></li>
+      <li><a href="#store">Store</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="https://www.linkedin.com/in/ruben-wilssens" target="_blank" rel="noopener">LinkedIn</a></li>
+    </ul>
+  </div>
+  <div class="copyright">© <span id="year"></span> Ruben Wilssens. Belgium.</div>
+</footer>
+
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------------- Tab Switching ---------------- */
+  const tabs = document.querySelectorAll('.cap-tab');
+  const panels = document.querySelectorAll('.cap-panel');
+  let currentTab = 0;
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentTab = parseInt(btn.dataset.tab, 10);
+      tabs.forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', b === btn); });
+      panels.forEach(p => p.classList.toggle('active', p.dataset.panel === btn.dataset.tab));
+    });
+  });
+
+  /* ---------------- Helper: SVG Coordinates ---------------- */
+  function getSvgCoordinates(svgEl, evt) {
+    const pt = svgEl.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    return pt.matrixTransform(svgEl.getScreenCTM().inverse());
+  }
+
+  /* ---------------- TAB 0: Distance, Direction & Position ---------------- */
+  const t0svg = document.getElementById('t0-svg');
+  const t0tag = document.getElementById('t0-tag');
+  const t0tagRing = document.getElementById('t0-tag-ring');
+  const t0tagLabel = document.getElementById('t0-tag-label');
+  const t0handle = document.getElementById('t0-handle');
+  const t0pulse = document.getElementById('t0-pulse');
+  const t0clipCircle = document.getElementById('t0-clip-circle');
+  const t0burstLine1 = document.getElementById('t0-burst-line1');
+  const t0burstLine2 = document.getElementById('t0-burst-line2');
+  const t0direction = document.getElementById('t0-direction');
+  const t0dist = document.getElementById('t0-dist');
+  const t0dirval = document.getElementById('t0-dirval');
+  const t0pos = document.getElementById('t0-pos');
+
+  const SCALE_0 = 68; // px per meter
+  const ANCHOR_0_X = 480, ANCHOR_0_Y = 100;
+  let tagPos0 = { x: 70, y: 100 };
+  let isDragging0 = false, hasDragged0 = false;
+
+  t0handle.addEventListener('pointerdown', (e) => {
+    isDragging0 = true; hasDragged0 = true;
+    t0handle.setPointerCapture(e.pointerId);
+    updateTag0(e);
+  });
+  t0handle.addEventListener('pointermove', (e) => { if (isDragging0) updateTag0(e); });
+  t0handle.addEventListener('pointerup', () => { isDragging0 = false; });
+  t0handle.addEventListener('pointercancel', () => { isDragging0 = false; });
+
+  function updateTag0(e) {
+    const p = getSvgCoordinates(t0svg, e);
+    tagPos0.x = Math.min(420, Math.max(40, p.x));
+    tagPos0.y = Math.min(180, Math.max(20, p.y));
+  }
+
+  function renderTab0(t) {
+    let tagX = tagPos0.x, tagY = tagPos0.y;
+    if (!hasDragged0) {
+      tagX = 70;
+      tagY = reducedMotion ? 100 : 100 + Math.sin(t * 0.8) * 60;
+    }
+
+    t0tag.setAttribute('cx', tagX); t0tag.setAttribute('cy', tagY);
+    t0tagRing.setAttribute('cx', tagX); t0tagRing.setAttribute('cy', tagY);
+    t0handle.setAttribute('cx', tagX); t0handle.setAttribute('cy', tagY);
+    t0tagLabel.setAttribute('x', tagX); t0tagLabel.setAttribute('y', tagY - 16);
+
+    t0pulse.setAttribute('cx', tagX); t0pulse.setAttribute('cy', tagY);
+    t0clipCircle.setAttribute('cx', tagX); t0clipCircle.setAttribute('cy', tagY);
+
+    const cycleFrac = (t * 0.625) % 1; // 1.6s cycle
+    t0clipCircle.setAttribute('r', cycleFrac * 180);
+
+    t0burstLine1.setAttribute('x1', tagX); t0burstLine1.setAttribute('y1', tagY);
+    t0burstLine2.setAttribute('x1', tagX); t0burstLine2.setAttribute('y1', tagY);
+    t0direction.setAttribute('x1', ANCHOR_0_X); t0direction.setAttribute('y1', ANCHOR_0_Y);
+    t0direction.setAttribute('x2', tagX); t0direction.setAttribute('y2', tagY);
+
+    const dx = tagX - ANCHOR_0_X;
+    const dy = tagY - ANCHOR_0_Y;
+    const distM = Math.hypot(dx, dy) / SCALE_0;
+    const dirDeg = Math.atan2(-dy, -dx) * 180 / Math.PI;
+    
+    const posX = (dx / SCALE_0).toFixed(2);
+    const posY = (-dy / SCALE_0).toFixed(2);
+
+    t0dist.textContent = distM.toFixed(2);
+    t0dirval.textContent = (dirDeg >= 0 ? '+' : '') + dirDeg.toFixed(0);
+    t0pos.textContent = `${posX}, ${posY}`;
+  }
+
+  /* ---------------- TAB 1: Modular & Scalable N readout mode integration ---------------- */
+  const t1mods = document.getElementById('t1-mods');
+  const t1bus = document.getElementById('t1-bus');
+  const t1flow = document.getElementById('t1-flow');
+  const t1label = document.getElementById('t1-label');
+  const t1modeSpec = document.getElementById('t1-mode-spec');
+
+  const MOD_W = 34, MOD_H = 60, MOD_GAP = 16, MOD_START_X = 90, MOD_CENTER_Y = 100;
+  const STEP_DUR = 2.5; 
+  const N_STEPS = 4;
+
+  const modCapabilities = [
+    { title: "N = 1 MODULE CASCADED", spec: "distance + 1D direction (2D position)" },
+    { title: "N = 2 MODULES CASCADED", spec: "distance + 2D direction (3D position) OR monostatic radar for presence detection" },
+    { title: "N = 3 MODULES CASCADED", spec: "distance + 2D direction (3D position) OR monostatic radar with direction-finding or enhanced isolation" },
+    { title: "N = 4 MODULES CASCADED", spec: "distance + 2D direction (3D position) AND/OR MIMO radar" }
+  ];
+
+  const modGroups = [];
+  for (let i = 0; i < N_STEPS; i++){
+    const x = MOD_START_X + i * (MOD_W + MOD_GAP);
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    let connector = i > 0 ? `<rect x="${x - MOD_GAP}" y="${MOD_CENTER_Y - 3}" width="${MOD_GAP}" height="6" rx="2" class="conn-tab"/>` : '';
+    g.innerHTML = `${connector}
+      <rect x="${x}" y="${MOD_CENTER_Y - MOD_H/2}" width="${MOD_W}" height="${MOD_H}" rx="5" class="mod-box"/>
+      <circle cx="${x + MOD_W/2}" cy="${MOD_CENTER_Y - 15}" r="4" class="dot-elem"/>
+      <circle cx="${x + MOD_W/2}" cy="${MOD_CENTER_Y + 15}" r="4" class="dot-elem"/>`;
+    t1mods.appendChild(g);
+    modGroups.push(g);
+  }
+
+  function renderTab1(t){
+    const cycle = t % (STEP_DUR * N_STEPS);
+    const rawIndex = cycle / STEP_DUR;
+    const stepIndex = Math.floor(rawIndex);
+    const frac = reducedMotion ? 0 : rawIndex - stepIndex;
+
+    modGroups.forEach((g, i) => { g.style.display = i <= stepIndex ? 'block' : 'none'; });
+
+    const nNow = stepIndex + 1;
+    const targetWidth = nNow * MOD_W + (nNow - 1) * MOD_GAP;
+    const prevWidth = stepIndex > 0 ? (stepIndex * MOD_W + (stepIndex - 1) * MOD_GAP) : 0;
+    const busWidth = prevWidth + (targetWidth - prevWidth) * frac;
+
+    t1bus.setAttribute('width', Math.max(0, busWidth));
+    const flowX = MOD_START_X + (busWidth * ((t * 0.8) % 1));
+    t1flow.setAttribute('cx', flowX);
+
+    t1label.textContent = modCapabilities[stepIndex].title;
+    t1modeSpec.textContent = modCapabilities[stepIndex].spec;
+  }
+
+  /* ---------------- TAB 3: Cascaded 3x (1x2) Array + 4 RX Paths (2x2 Grid) ---------------- */
+  const t3svg = document.getElementById('t3-svg');
+  const t3targetGroup = document.getElementById('t3-target-group');
+  const t3handle = document.getElementById('t3-handle');
+  const t3txPath = document.getElementById('t3-tx-path');
+  const t3txPulseLine = document.getElementById('t3-tx-pulse-line');
+
+  const t3rx1Path = document.getElementById('t3-rx1-path');
+  const t3rx2Path = document.getElementById('t3-rx2-path');
+  const t3rx3Path = document.getElementById('t3-rx3-path');
+  const t3rx4Path = document.getElementById('t3-rx4-path');
+
+  const t3rx1PulseLine = document.getElementById('t3-rx1-pulse-line');
+  const t3rx2PulseLine = document.getElementById('t3-rx2-pulse-line');
+  const t3rx3PulseLine = document.getElementById('t3-rx3-pulse-line');
+  const t3rx4PulseLine = document.getElementById('t3-rx4-pulse-line');
+
+  const t3txClipCircle = document.getElementById('t3-tx-clip-circle');
+  const t3rxClipCircle = document.getElementById('t3-rx-clip-circle');
+
+  const t3bpm = document.getElementById('t3-bpm');
+  const t3dir = document.getElementById('t3-dir');
+  const t3range = document.getElementById('t3-range');
+
+  let targetPos3 = { x: 440, y: 100 };
+  let isDragging3 = false, hasDragged3 = false;
+  const RADAR_CENTER_X = 95, RADAR_CENTER_Y = 100;
+
+  t3handle.addEventListener('pointerdown', (e) => {
+    isDragging3 = true; hasDragged3 = true;
+    t3handle.setPointerCapture(e.pointerId);
+    updateTarget3(e);
+  });
+  t3handle.addEventListener('pointermove', (e) => { if (isDragging3) updateTarget3(e); });
+  t3handle.addEventListener('pointerup', () => { isDragging3 = false; });
+  t3handle.addEventListener('pointercancel', () => { isDragging3 = false; });
+
+  function updateTarget3(e) {
+    const p = getSvgCoordinates(t3svg, e);
+    targetPos3.x = Math.min(520, Math.max(220, p.x));
+    targetPos3.y = Math.min(170, Math.max(30, p.y));
+  }
+
+  function renderTab3(t) {
+    let tx = targetPos3.x, ty = targetPos3.y;
+    if (!hasDragged3) {
+      tx = 440;
+      ty = reducedMotion ? 100 : 100 + Math.sin(t * 0.7) * 45;
+    }
+
+    t3targetGroup.setAttribute('transform', `translate(${tx - 440}, ${ty - 100})`);
+
+    // Update dynamic SVG paths for TX element and 4 RX grid elements
+    t3txPath.setAttribute('x2', tx); t3txPath.setAttribute('y2', ty);
+    t3txPulseLine.setAttribute('x2', tx); t3txPulseLine.setAttribute('y2', ty);
+
+    t3rx1Path.setAttribute('x1', tx); t3rx1Path.setAttribute('y1', ty);
+    t3rx2Path.setAttribute('x1', tx); t3rx2Path.setAttribute('y1', ty);
+    t3rx3Path.setAttribute('x1', tx); t3rx3Path.setAttribute('y1', ty);
+    t3rx4Path.setAttribute('x1', tx); t3rx4Path.setAttribute('y1', ty);
+
+    t3rx1PulseLine.setAttribute('x1', tx); t3rx1PulseLine.setAttribute('y1', ty);
+    t3rx2PulseLine.setAttribute('x1', tx); t3rx2PulseLine.setAttribute('y1', ty);
+    t3rx3PulseLine.setAttribute('x1', tx); t3rx3PulseLine.setAttribute('y1', ty);
+    t3rx4PulseLine.setAttribute('x1', tx); t3rx4PulseLine.setAttribute('y1', ty);
+
+    // Synchronize wave clips
+    const pulseCycle = (t * 0.5) % 1; // 2.0s pulse loop
+    t3txClipCircle.setAttribute('r', pulseCycle * 400);
+    t3rxClipCircle.setAttribute('cx', tx); t3rxClipCircle.setAttribute('cy', ty);
+    t3rxClipCircle.setAttribute('r', Math.max(0, (pulseCycle - 0.4) * 400));
+
+    // Calculate dynamic values
+    const dx = tx - RADAR_CENTER_X;
+    const dy = ty - RADAR_CENTER_Y;
+    const rangeM = Math.hypot(dx, dy) / SCALE_0;
+    const dirDeg = Math.atan2(dy, dx) * 180 / Math.PI;
+
+    const bpmVal = 14.2 + Math.sin(t * 1.74) * 0.8;
+
+    t3range.textContent = rangeM.toFixed(2);
+    t3dir.textContent = (dirDeg >= 0 ? '+' : '') + dirDeg.toFixed(0);
+    t3bpm.textContent = bpmVal.toFixed(1);
+  }
+
+  /* ---------------- Main Animation Loop ---------------- */
+  function loop(ts){
+    const t = ts / 1000;
+    if (currentTab === 0) renderTab0(t);
+    if (currentTab === 1) renderTab1(t);
+    if (currentTab === 3) renderTab3(t);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  /* ---------------- Scroll Reveal ---------------- */
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>
