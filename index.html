@@ -121,18 +121,17 @@
   }
   .hero-image{
     flex:1 1 0;
-    border-radius:var(--radius);
-    overflow:hidden;
-    border:1px solid var(--panel-border);
-    background:var(--panel);
     min-height:320px;
     max-height:600px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
   }
   .hero-image img{
     display:block;
     width:100%;
     height:100%;
-    object-fit:cover;
+    object-fit:contain;
   }
   @media (max-width:860px){
     .hero-image{ min-height:260px; }
@@ -289,13 +288,26 @@
   }
   .product .swatch{
     width:100%; height:110px; border-radius:6px; margin-bottom:18px;
-    background:
+    /* background:
       repeating-linear-gradient(135deg, rgba(70,179,230,0.10) 0 2px, transparent 2px 14px),
-      linear-gradient(160deg, #171C22, #0F1216);
-    border:1px solid var(--panel-border);
+      linear-gradient(160deg, #171C22, #0F1216); */
+    /* border:1px solid var(--panel-border); */
     display:flex; align-items:center; justify-content:center;
     font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-faint);
     letter-spacing:0.08em;
+  }
+  .product .swatch.swatch-img{
+    padding:10px;
+    overflow:hidden;
+  }
+  .product .swatch.swatch-img.swatch-rotate{
+    height:250px;
+  }
+  .product .swatch.swatch-img img{
+    width:100%; height:100%; object-fit:contain;
+  }
+  .product .swatch.swatch-img.swatch-rotate img{
+    transform:rotate(-90deg);
   }
   .product h3{font-size:17px;}
   .product .spec{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--copper); margin-top:6px; }
@@ -372,10 +384,10 @@
 
       <div class="hero-image-group reveal">
         <div class="hero-image">
-          <img src="images/hero-board.jpg" alt="UWB antenna and RF hardware prototype, front view">
+          <img src="images/hero-board.png" alt="UWB antenna and RF hardware prototype, front view">
         </div>
         <div class="hero-image">
-          <img src="images/hero-board-back.jpg" alt="UWB antenna and RF hardware prototype, back view">
+          <img src="images/hero-board-back.png" alt="UWB antenna and RF hardware prototype, back view">
         </div>
       </div>
     </div>
@@ -695,6 +707,15 @@
         <h3>Slat Controller</h3>
         <div class="spec">Motorized slats / blinds</div>
         <p class="desc">Local button control plus Home Assistant integration, so it still works when the network doesn't.</p>
+        <a class="btn btn-ghost" href="https://www.linkedin.com/in/ruben-wilssens" target="_blank" rel="noopener">Inquire via LinkedIn</a>
+      </div>
+      <div class="product">
+        <div class="swatch swatch-img swatch-rotate">
+          <img src="images/hero-board.png" alt="Modular UWB board">
+        </div>
+        <h3>Tileable UWB Module</h3>
+        <div class="spec">Localization · Sensing</div>
+        <p class="desc">A modular, scalable UWB board built for advanced localization, sensing, and communication — cascade multiple units for more range or coverage.</p>
         <a class="btn btn-ghost" href="https://www.linkedin.com/in/ruben-wilssens" target="_blank" rel="noopener">Inquire via LinkedIn</a>
       </div>
       <div class="product soon">
